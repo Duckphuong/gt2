@@ -1,0 +1,262 @@
+function main()
+
+    % Nhập và lưu thông tin của ba đường tròn
+    circles = nhapVaLuuBaDuongTron();
+    
+    lines = nhapHaiDuongThang();
+    
+    
+    % Tìm và in ra nghiệm của đường tròn 1 và 3
+    solution = findIntersection(circles);
+    
+    if ~isempty(solution)
+        % In ra nghiệm
+        %disp('Nghiệm của đường tròn 1 và 3:');
+        b = solution(1);
+        a = solution(2);
+        %disp(['x = ', num2str(a)]);
+        %disp(['y = ', b]);
+    else
+        disp('Không tìm thấy nghiệm hợp lệ cho đường tròn 1 và 3.');
+    end
+
+    dz = daoham();
+    s1 = tichphan1(circles) * dz;
+    s2 = tichphan2(circles) * dz;
+    s4 = tichphan4(circles,a,b) * dz;
+    s_dayho = 6 * s1 + s2 + 2 * s4;
+    
+    
+    s5 = tichphan5(circles,lines);
+    s6 = tichphan6(circles, lines, b);
+    s7 = tichphan7(circles, lines, a, b);
+    s_thanhho =  s5 + s6 + s7;
+
+    disp(['Dien tich thanh ho :', num2str(s_thanhho)]);
+    disp(['Dien tich day ho :',num2str(s_dayho)]);
+  
+end
+
+function solution = findIntersection(circles)
+    % Định nghĩa hàm equations cho đường tròn 1 và 3
+    function F = equations(x)
+        F = [(x(1)-circles(1).a)^2 + (x(2)-circles(1).b)^2 - (circles(1).r)^2;
+             (x(1)-circles(3).a)^2 + (x(2)-circles(3).b)^2 - (circles(3).r)^2];
+    end
+
+    % Giá trị ban đầu cho fsolve
+    x0 = [3; 1]; % Giá trị ban đầu
+
+    % Giải hệ phương trình bằng fsolve
+    [solution, ~, exitflag] = fsolve(@equations, x0);
+
+    % Kiểm tra kết quả
+    if exitflag <= 0
+        solution = [];
+    end
+end
+
+
+function s1 = tichphan1(circles)
+    
+    
+     % Định nghĩa hàm tích phân
+    f = @(p, r) r;
+
+    % Giới hạn tích phân đầu tiên
+    p_min = -pi/2;
+    p_max = 0;
+    r_min = 0;
+    r_max = circles(1).r;
+    % Tính tích phân kép
+    s1 = integral2(f, p_min, p_max, r_min, r_max);
+end
+
+function s2 = tichphan2(circles)
+    
+    
+     % Định nghĩa hàm tích phân
+    f = @(p, r) ones(size(p));
+
+    % Giới hạn tích phân đầu tiên
+    p_min = -2.5;
+    p_max = circles(1).a;
+    r_min = 0;
+    r_max = circles(1).b;
+    % Tính tích phân kép
+    s2 = integral2(f, p_min, p_max, r_min, r_max);
+end
+
+function s4 = tichphan4(circles,a,b)
+    
+    
+     % Định nghĩa hàm tích phân
+    f_a = @(p, r) ones(size(p));
+
+    % Giới hạn tích phân đầu tiên
+    p_min = 0;
+    p_max = b;
+    r_min = circles(1).b;
+    r_max = a;
+    % Tính tích phân kép
+    s_a = integral2(f_a, p_min, p_max, r_min, r_max);
+
+     % Định nghĩa hàm tích phân
+    f_b = @(p, r) ones(size(p));
+
+    % Giới hạn tích phân đầu tiên
+    p_min = circles(1).a-circles(1).r;
+    p_max = b;
+    r_min = circles(1).b;
+    r_max = @(p) circles(1).b + sqrt((circles(1).r)^2 - (p - circles(1).a).^2);
+
+    % Tính tích phân kép
+    s_b = integral2(f_b, p_min, p_max, r_min, r_max);
+    
+      % Định nghĩa hàm tích phân
+    f_c = @(p, r) ones(size(p));
+
+    % Giới hạn tích phân đầu tiên
+    p_min = 0;
+    p_max = b;
+    r_min = @(p) circles(3).b - sqrt((circles(3).r)^2 - p.^2);
+    r_max = a;
+    % Tính tích phân kép
+    s_c = integral2(f_c, p_min, p_max, r_min, r_max);
+    
+    s4 = abs(s_a) - abs(s_b) - abs(s_c);
+
+end
+
+function s5 = tichphan5(circles, lines)
+    % Tính toán hằng số d và e từ hai đường thẳng
+    d = (lines(2).b - lines(1).b) / (lines(1).a - lines(2).a);
+    e = lines(1).a * d - lines(1).b;
+
+    % Define integration limits
+    p_min = e;
+    p_max = 0;
+    r_min = 0.000001;
+    r_max = circles(1).r;
+
+
+    % Tính tích phân kép bằng integral2
+    numerator = @(r) (-2 * r + circles(1).b * 2).^2;
+    denominator = @(r) 4 * ((circles(1).r)^2 - (r - circles(1).b).^2);
+
+    % Define the integrand function f(p, r)
+    f = @(p, r) sqrt(numerator(r) ./ denominator(r) + 1);
+
+  
+    % Calculate the double integral using integral2
+    s5 = 2 * integral2(f, p_min, p_max, r_min, r_max);
+
+    % Display the result
+    disp(s5);
+end
+
+function s6 = tichphan6(circles, lines, b)
+    % Tính toán hằng số d và e từ hai đường thẳng
+    d = lines(2).a * (circles(3).b + circles(3).r ) + lines(2).b;
+    e = lines(2).a * (circles(3).b - circles(3).r ) + lines(2).b;
+
+    % Define integration limits
+    p_min = 0;
+    p_max = b;
+    r_min = e;
+    r_max = @(p) (d - e)/2 * sqrt(1 - (p/circles(3).r).^2);
+
+    % Tính tích phân kép bằng integral2
+    numerator = @(p) (-2 * p + circles(3).a * 2).^2;
+    denominator = @(p) 4 * ((circles(3).r).^2 - (p - circles(3).a).^2);
+
+    % Define the integrand function f(p, r)
+    f = @(p, r) sqrt(numerator(p) ./ denominator(p) + 1);
+
+  
+    % Calculate the double integral using integral2
+    s6 = 2 * integral2(f, p_min, p_max, r_min, r_max);
+
+    % Display the result
+    disp(s6);
+end
+
+function s7 = tichphan7(circles, lines, a , b)
+    
+    d = lines(2).a * a + lines(2).b;
+    p_min = b;       
+    p_max = circles(1).a;
+    r_min = d;
+    r_max = @(p) -(lines(2).b/2) * sqrt(1-(p/circles(1).a).^2);
+
+    % Tính tích phân kép bằng integral2
+    numerator = @(p) (-2 * p + circles(1).a * 2).^2;
+    denominator = @(p) 4 * ((circles(1).r).^2 - (p - (circles(1).a)).^2);
+
+    % Define the integrand function f(p, r)
+    f = @(p, r) sqrt(numerator(p) ./ denominator(p) + 1);
+
+    % Calculate the double integral using integral2
+    s7_1 =  integral2(f, p_min, p_max, r_min, r_max);
+    s7_2 =  integral2(f, p_min, p_max, r_min, 0);
+    % Display the result
+    s7 =  2 * (s7_2 - abs(s7_1));
+    disp(s7);
+end
+
+function dz = daoham()
+    % Định nghĩa biến ký hiệu và phương trình
+    syms y
+    equation = -sqrt(3)/3 * y;
+    
+    % Tính đạo hàm của phương trình theo biến y
+    dz_dy = diff(equation, y);
+    
+    % Chuyển đổi kết quả đạo hàm về số thực
+    dz_dy_numeric = double(dz_dy);
+    
+    % Tính giá trị của dz dựa trên dz_dy_numeric
+    dz = sqrt(1 + dz_dy_numeric^2);
+end
+
+
+function circles = nhapVaLuuBaDuongTron()
+    % Khởi tạo một cấu trúc để lưu trữ thông tin của ba đường tròn
+    circles = struct('a', {}, 'b', {}, 'r', {});
+
+    % Tạo một vòng lặp để nhập thông tin của ba đường tròn
+    for i = 1:3
+        fprintf('Đường tròn thứ %d:\n', i);
+
+        % Nhập tọa độ tâm (a, b) và bán kính r từ người dùng
+        a = input('  Nhập tọa độ x của tâm đường tròn (a): ');
+        b = input('  Nhập tọa độ y của tâm đường tròn (b): ');
+        r = input('  Nhập bán kính của đường tròn (r): ');
+
+        % Kiểm tra giá trị của bán kính
+        if r <= 0
+            error('  Bán kính phải lớn hơn 0');
+        end
+
+        % Lưu thông tin của đường tròn vào cấu trúc
+        circles(i).a = a;
+        circles(i).b = b;
+        circles(i).r = r;
+    end
+end
+
+function lines = nhapHaiDuongThang()
+
+     % Khởi tạo một cấu trúc để lưu trữ thông tin của ba đường tròn
+    lines = struct('a', {}, 'b', {});
+
+    % Tạo một vòng lặp để nhập thông tin của ba đường tròn
+    for i = 1:2
+        fprintf('Đường tròn thứ %d:\n', i);
+        a = input('Nhập hệ số a: ');
+        b = input('Nhập hệ số b: ');
+
+        lines(i).a = a;
+        lines(i).b = b;
+    end  
+end

@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+srcs/e2e_chat/data/
+srcs/pki/store/
+.~lock.*#

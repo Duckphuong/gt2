@@ -1,0 +1,2 @@
+# De tai 1.1 va 1.2 chi dung thu vien chuan Python + 'cryptography'.
+cryptography>=41.0
